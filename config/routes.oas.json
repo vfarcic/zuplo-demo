@@ -1,0 +1,1155 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "DevOps AI Toolkit REST API",
+    "description": "REST API gateway for DevOps AI Toolkit MCP tools - provides HTTP access to all AI-powered DevOps automation capabilities",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Viktor Farcic",
+      "url": "https://devopstoolkit.live/",
+      "email": "viktor@farcic.com"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://github.com/vfarcic/dot-ai/blob/main/LICENSE"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://dot-ai.18.209.234.147.nip.io",
+      "description": "DevOps AI Toolkit MCP Server"
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Open MCP SSE stream",
+        "description": "Opens a Server-Sent Events (SSE) stream for Model Context Protocol communication. This endpoint allows the server to push messages to the client without the client first sending data.",
+        "tags": [
+          "MCP Protocol"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "SSE stream opened successfully",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Method not allowed - server does not support SSE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Send MCP JSON-RPC message",
+        "description": "Send a JSON-RPC message using Model Context Protocol. Used for tool calls, initialization, and other MCP operations. The server may respond with either a JSON object or open an SSE stream.",
+        "tags": [
+          "MCP Protocol"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/McpJsonRpcRequest"
+              },
+              "examples": {
+                "initialize": {
+                  "summary": "Initialize MCP session",
+                  "value": {
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "initialize",
+                    "params": {
+                      "protocolVersion": "2024-11-05",
+                      "capabilities": {},
+                      "clientInfo": {
+                        "name": "example-client",
+                        "version": "1.0.0"
+                      }
+                    }
+                  }
+                },
+                "toolCall": {
+                  "summary": "Call a tool",
+                  "value": {
+                    "jsonrpc": "2.0",
+                    "id": 2,
+                    "method": "tools/call",
+                    "params": {
+                      "name": "version",
+                      "arguments": {}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "JSON-RPC response or SSE stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpJsonRpcResponse"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream with JSON-RPC messages"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid JSON-RPC message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/McpJsonRpcError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools": {
+      "get": {
+        "summary": "Discover available tools",
+        "description": "Get a list of all available tools with their schemas and metadata",
+        "tags": [
+          "Tool Discovery"
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter tools by category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Filter tools by tag",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search tools by name or description",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of available tools",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolDiscoveryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/manageOrgData": {
+      "post": {
+        "summary": "Execute manageOrgData tool",
+        "description": "Unified tool for managing cluster data: organizational patterns, policy intents, and resource capabilities. For patterns and policies: supports create, list, get, delete, deleteAll, and search operations (patterns also support step-by-step creation workflow). For capabilities: supports scan, list, get, delete, deleteAll, and progress operations for cluster resource capability discovery and management. Use dataType parameter to specify what to manage: \"pattern\" for organizational patterns, \"policy\" for policy intents, \"capabilities\" for resource capabilities.",
+        "tags": [
+          "Management"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/manageOrgDataRequest"
+              },
+              "example": {
+                "dataType": "pattern",
+                "operation": "create",
+                "sessionId": "example sessionId",
+                "step": "example step",
+                "response": "example response",
+                "id": "example id",
+                "limit": 42,
+                "resource": {
+                  "kind": "example kind",
+                  "group": "example group",
+                  "apiVersion": "example apiVersion"
+                },
+                "resourceList": "example resourceList",
+                "collection": "example collection",
+                "interaction_id": "example interaction_id"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool execution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/projectSetup": {
+      "post": {
+        "summary": "Execute projectSetup tool",
+        "description": "Setup project, audit repository, or generate repository files. Use this when user wants to: setup project, audit repo, check missing files, create README, add LICENSE, generate CONTRIBUTING.md, add CI/CD workflows, initialize documentation, setup governance files. Analyzes local repositories and generates missing configuration, documentation, and governance files. Does NOT handle Kubernetes deployments - use recommend for those.",
+        "tags": [
+          "Project Setup"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/projectSetupRequest"
+              },
+              "example": {
+                "step": "discover",
+                "sessionId": "example sessionId",
+                "existingFiles": [
+                  "example item"
+                ],
+                "selectedScopes": [
+                  "example item"
+                ],
+                "scope": "example scope",
+                "answers": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool execution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/recommend": {
+      "post": {
+        "summary": "Execute recommend tool",
+        "description": "Deploy, create, setup, install, or run applications, infrastructure, and services on Kubernetes with AI recommendations. Describe what you want to deploy. Does NOT handle policy creation, organizational patterns, or resource capabilities - use manageOrgData for those.",
+        "tags": [
+          "Deployment"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/recommendRequest"
+              },
+              "example": {
+                "stage": "example stage",
+                "intent": "deploy web application with PostgreSQL database",
+                "final": false,
+                "solutionId": "example solutionId",
+                "answers": {},
+                "timeout": 30,
+                "interaction_id": "example interaction_id"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool execution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/remediate": {
+      "post": {
+        "summary": "Execute remediate tool",
+        "description": "AI-powered Kubernetes issue analysis that provides root cause identification and actionable remediation steps. Unlike basic kubectl commands, this tool performs multi-step investigation, correlates cluster data, and generates intelligent solutions. Use when users want to understand WHY something is broken, not just see raw status. Ideal for: troubleshooting failures, diagnosing performance issues, analyzing pod problems, investigating networking/storage issues, or any \"what's wrong\" questions.",
+        "tags": [
+          "Troubleshooting"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/remediateRequest"
+              },
+              "example": {
+                "issue": "example issue",
+                "mode": "manual",
+                "confidenceThreshold": 42,
+                "maxRiskLevel": "low",
+                "executeChoice": 42,
+                "sessionId": "example sessionId",
+                "executedCommands": [
+                  "example item"
+                ],
+                "interaction_id": "example interaction_id"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool execution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tools/version": {
+      "post": {
+        "summary": "Execute version tool",
+        "description": "Get comprehensive system health and diagnostics",
+        "tags": [
+          "System"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/versionRequest"
+              },
+              "example": {
+                "interaction_id": "example interaction_id"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tool execution result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - invalid parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Tool not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/openapi": {
+      "get": {
+        "summary": "Get OpenAPI specification",
+        "description": "Returns the complete OpenAPI 3.0 specification for this API",
+        "tags": [
+          "Documentation"
+        ],
+        "responses": {
+          "200": {
+            "description": "OpenAPI specification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "description": "OpenAPI 3.0 specification"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RestApiResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "description": "Whether the request was successful"
+          },
+          "data": {
+            "type": "object",
+            "description": "Response data"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message"
+              },
+              "details": {
+                "type": "object",
+                "description": "Additional error details"
+              }
+            }
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Response timestamp"
+              },
+              "requestId": {
+                "type": "string",
+                "description": "Unique request identifier"
+              },
+              "version": {
+                "type": "string",
+                "description": "API version"
+              }
+            }
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ToolExecutionResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RestApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "result": {
+                    "type": "object",
+                    "description": "Tool execution result"
+                  },
+                  "tool": {
+                    "type": "string",
+                    "description": "Name of the executed tool"
+                  },
+                  "executionTime": {
+                    "type": "number",
+                    "description": "Execution time in milliseconds"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ToolDiscoveryResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RestApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "tools": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ToolInfo"
+                    }
+                  },
+                  "total": {
+                    "type": "number",
+                    "description": "Total number of tools"
+                  },
+                  "categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Available tool categories"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Available tool tags"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ToolInfo": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Tool name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Tool description"
+          },
+          "schema": {
+            "type": "object",
+            "description": "Tool input schema"
+          },
+          "category": {
+            "type": "string",
+            "description": "Tool category"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tool tags"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "schema"
+        ]
+      },
+      "ErrorResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RestApiResponse"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ]
+              }
+            },
+            "required": [
+              "error"
+            ]
+          }
+        ]
+      },
+      "McpJsonRpcRequest": {
+        "type": "object",
+        "description": "JSON-RPC 2.0 request message for MCP protocol",
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "enum": [
+              "2.0"
+            ],
+            "description": "JSON-RPC version"
+          },
+          "id": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ],
+            "description": "Request identifier"
+          },
+          "method": {
+            "type": "string",
+            "description": "Method name (e.g., initialize, tools/call, tools/list)"
+          },
+          "params": {
+            "type": "object",
+            "description": "Method parameters"
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "method"
+        ]
+      },
+      "McpJsonRpcResponse": {
+        "type": "object",
+        "description": "JSON-RPC 2.0 response message",
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "enum": [
+              "2.0"
+            ],
+            "description": "JSON-RPC version"
+          },
+          "id": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ],
+            "description": "Request identifier"
+          },
+          "result": {
+            "type": "object",
+            "description": "Method result"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "number",
+                "description": "Error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message"
+              },
+              "data": {
+                "type": "object",
+                "description": "Additional error data"
+              }
+            }
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id"
+        ]
+      },
+      "McpJsonRpcError": {
+        "type": "object",
+        "description": "JSON-RPC 2.0 error response",
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "enum": [
+              "2.0"
+            ],
+            "description": "JSON-RPC version"
+          },
+          "id": {
+            "type": [
+              "number",
+              "string",
+              "null"
+            ],
+            "description": "Request identifier"
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "number",
+                "description": "Error code"
+              },
+              "message": {
+                "type": "string",
+                "description": "Error message"
+              },
+              "data": {
+                "type": "object",
+                "description": "Additional error data"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id",
+          "error"
+        ]
+      },
+      "manageOrgDataRequest": {
+        "type": "object",
+        "properties": {
+          "dataType": {
+            "type": "string",
+            "enum": [
+              "pattern",
+              "policy",
+              "capabilities"
+            ],
+            "description": "Type of cluster data to manage: \"pattern\" for organizational patterns, \"policy\" for policy intents, \"capabilities\" for resource capabilities"
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "list",
+              "get",
+              "delete",
+              "deleteAll",
+              "scan",
+              "analyze",
+              "progress",
+              "search"
+            ],
+            "description": "Operation to perform on the cluster data"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Session ID (required for continuing workflow steps, optional for progress - uses latest session if omitted)"
+          },
+          "step": {
+            "type": "string",
+            "description": "Current workflow step (required when sessionId is provided)"
+          },
+          "response": {
+            "type": "string",
+            "description": "User response to previous workflow step question"
+          },
+          "id": {
+            "type": "string",
+            "description": "Data item ID (required for get/delete operations) or search query (required for search operations)"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of items to return (default: 10)"
+          },
+          "resource": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "group": {
+                "type": "string"
+              },
+              "apiVersion": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "group",
+              "apiVersion"
+            ],
+            "additionalProperties": false,
+            "description": "Kubernetes resource reference (for capabilities operations)"
+          },
+          "resourceList": {
+            "type": "string",
+            "description": "Comma-separated list of resources to scan (format: Kind.group or Kind for core resources)"
+          },
+          "collection": {
+            "type": "string",
+            "description": "Collection name for capabilities operations (default: \"capabilities\", use \"capabilities-policies\" for pre-populated test data)"
+          },
+          "interaction_id": {
+            "type": "string",
+            "description": "INTERNAL ONLY - Do not populate. Used for evaluation dataset generation."
+          }
+        },
+        "required": [
+          "dataType",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "projectSetupRequest": {
+        "type": "object",
+        "properties": {
+          "step": {
+            "type": "string",
+            "enum": [
+              "discover",
+              "reportScan",
+              "generateScope"
+            ],
+            "description": "Workflow step: \"discover\" (default) starts new session and returns file list, \"reportScan\" analyzes scan results, \"generateScope\" generates all files in a scope. Defaults to \"discover\" if omitted."
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Session ID from previous step (required for reportScan and generateScope steps)"
+          },
+          "existingFiles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of files that exist in the repository (required for first reportScan call, optional for subsequent calls with selectedScopes)"
+          },
+          "selectedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scopes user chose to setup (e.g., [\"readme\", \"legal\", \"github-community\"]) (required for reportScan step after initial scan)"
+          },
+          "scope": {
+            "type": "string",
+            "description": "Scope to generate (e.g., \"github-community\") (required for generateScope step)"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Answers to ALL questions for the scope (required for generateScope step)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "recommendRequest": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "description": "Deployment workflow stage: \"recommend\" (default), \"chooseSolution\", \"answerQuestion:required\", \"answerQuestion:basic\", \"answerQuestion:advanced\", \"answerQuestion:open\", \"generateManifests\", \"deployManifests\". Defaults to \"recommend\" if omitted."
+          },
+          "intent": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "description": "What the user wants to deploy, create, setup, install, or run on Kubernetes. Examples: \"deploy web application\", \"create PostgreSQL database\", \"setup Redis cache\", \"install Prometheus monitoring\", \"configure Ingress controller\", \"provision storage volumes\", \"launch MongoDB operator\", \"run Node.js API\", \"setup CI/CD pipeline\", \"create load balancer\", \"install Grafana dashboard\", \"deploy React frontend\""
+          },
+          "final": {
+            "type": "boolean",
+            "description": "Set to true to skip intent clarification and proceed directly with recommendations. If false or omitted, the tool will analyze the intent and provide clarification questions to help improve recommendation quality."
+          },
+          "solutionId": {
+            "type": "string",
+            "description": "Solution ID for chooseSolution, answerQuestion, generateManifests, and deployManifests stages"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "User answers for answerQuestion stage"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Deployment timeout in seconds for deployManifests stage"
+          },
+          "interaction_id": {
+            "type": "string",
+            "description": "INTERNAL ONLY - Do not populate. Used for evaluation dataset generation."
+          }
+        },
+        "additionalProperties": false
+      },
+      "remediateRequest": {
+        "type": "object",
+        "properties": {
+          "issue": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000,
+            "description": "Issue description that needs to be analyzed and remediated"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "manual",
+              "automatic"
+            ],
+            "default": "manual",
+            "description": "Execution mode: manual requires user approval, automatic executes based on thresholds"
+          },
+          "confidenceThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.8,
+            "description": "For automatic mode: minimum confidence required for execution (default: 0.8)"
+          },
+          "maxRiskLevel": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "default": "low",
+            "description": "For automatic mode: maximum risk level allowed for execution (default: low)"
+          },
+          "executeChoice": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 2,
+            "description": "Execute a previously generated choice (1=Execute via MCP, 2=Execute via agent)"
+          },
+          "sessionId": {
+            "type": "string",
+            "description": "Session ID from previous remediate call when executing a choice"
+          },
+          "executedCommands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Commands that were executed to remediate the issue"
+          },
+          "interaction_id": {
+            "type": "string",
+            "description": "INTERNAL ONLY - Do not populate. Used for evaluation dataset generation."
+          }
+        },
+        "additionalProperties": false
+      },
+      "versionRequest": {
+        "type": "object",
+        "properties": {
+          "interaction_id": {
+            "type": "string",
+            "description": "INTERNAL ONLY - Do not populate. Used for evaluation dataset generation."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "MCP Protocol",
+      "description": "Model Context Protocol endpoints for AI assistant integration via JSON-RPC and Server-Sent Events"
+    },
+    {
+      "name": "Tool Discovery",
+      "description": "Endpoints for discovering available tools and their capabilities"
+    },
+    {
+      "name": "Documentation",
+      "description": "API documentation and specification endpoints"
+    },
+    {
+      "name": "Deployment",
+      "description": "Deployment tools and operations"
+    },
+    {
+      "name": "Management",
+      "description": "Management tools and operations"
+    },
+    {
+      "name": "Project Setup",
+      "description": "Project Setup tools and operations"
+    },
+    {
+      "name": "System",
+      "description": "System tools and operations"
+    },
+    {
+      "name": "Troubleshooting",
+      "description": "Troubleshooting tools and operations"
+    }
+  ]
+}

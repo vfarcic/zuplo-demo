@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
+  "packages": [
+    "awscli2@2.31.11",
+    "eksctl@0.216.0",
+    "teller@2.0.7",
+    "nushell@0.108.0",
+    "kubernetes-helm@3.19.0",
+    "jq@1.8.1",
+    "git@2.51.0"
+  ],
+  "shell": {
+    "init_hook": [],
+    "scripts":   {}
+  }
+}

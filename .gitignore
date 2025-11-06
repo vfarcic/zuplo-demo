@@ -1,0 +1,7 @@
+# Sensitive files
+.env
+aws-creds.conf
+kubeconfig-dot.yaml
+
+# System files
+.DS_Store
