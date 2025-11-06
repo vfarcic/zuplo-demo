@@ -16,7 +16,7 @@
   },
   "servers": [
     {
-      "url": "http://dot-ai.18.209.234.147.nip.io",
+      "url": "http://dot-ai.52.3.181.37.nip.io",
       "description": "DevOps AI Toolkit MCP Server"
     }
   ],
