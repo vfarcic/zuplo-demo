@@ -19,7 +19,21 @@ def "main setup" [] {
 
     main apply dot-ai --host $"dot-ai.($ingress_data.host)" --ingress-class $ingress_data.class --version "0.139.0"
 
+    open routes.oas.json
+        | upsert servers.0.url $"http://dot-ai.($ingress_data.host)"
+        | save --force routes.oas.json
+
+    open .mcp.json
+        | upsert mcpServers."dot-ai".url $"http://dot-ai.($ingress_data.host)"
+        | save --force .mcp.json
+
     main print source
+
+    start https://portal.zuplo.com
+
+    print $"
+Please register at (ansi yellow_bold)https://portal.zuplo.com(ansi reset)
+"
 
 }
 
