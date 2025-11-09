@@ -17,7 +17,7 @@ def "main setup" [] {
 
     let ingress_data = main apply ingress --provider $provider
 
-    main apply dot-ai --host $"dot-ai.($ingress_data.host)" --ingress-class $ingress_data.class
+    main apply dot-ai --host $"dot-ai.($ingress_data.host)" --ingress-class $ingress_data.class --version "0.139.0"
 
     main print source
 

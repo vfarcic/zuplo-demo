@@ -10,7 +10,9 @@
     "git@2.51.0"
   ],
   "shell": {
-    "init_hook": [],
+    "init_hook": [
+      "export PATH=$PATH:$HOME/.npm-global/bin"
+    ],
     "scripts":   {}
   }
 }
