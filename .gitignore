@@ -5,3 +5,5 @@ kubeconfig-dot.yaml
 
 # System files
 .DS_Store
+
+/gke_gcloud_auth_plugin_cache
